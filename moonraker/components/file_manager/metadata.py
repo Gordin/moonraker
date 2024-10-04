@@ -96,6 +96,19 @@ def regex_find_string(pattern: str, data: str) -> Optional[str]:
         return match.group(1).strip('"')
     return None
 
+def _regex_find_string_znp(pattern: str, data: str) -> Optional[str]:
+    last_pattern = ';'+pattern
+    split_datas = data.split("\n")
+    preview_string = ""
+    for split_data in split_datas:
+        if last_pattern in split_data:
+            preview_string += split_data.replace(last_pattern, "")
+        elif pattern in split_data:
+            preview_string += split_data.replace(pattern, "")
+    if preview_string:
+        return preview_string
+    return None
+
 def regex_find_min_float(pattern: str, data: str) -> Optional[float]:
     result = regex_find_floats(pattern, data)
     return min(result) if result else None
@@ -556,6 +569,14 @@ class Cura(BaseSlicer):
             return None
         return thumbs
 
+    def parse_gimage(self) -> Optional[str]:
+        return _regex_find_string_znp(
+            r";gimage:", self.header_data)
+
+    def parse_simage(self) -> Optional[str]:
+        return _regex_find_string_znp(
+            r";simage:", self.header_data)
+
 class Simplify3D(BaseSlicer):
     def check_identity(self, data: str) -> Optional[Dict[str, str]]:
         match = re.search(r"Simplify3D\(R\)\sVersion\s(.*)", data)
@@ -927,6 +948,8 @@ SUPPORTED_SLICERS: List[Type[BaseSlicer]] = [
     KISSlicer, IdeaMaker, IceSL, KiriMoto
 ]
 SUPPORTED_DATA = [
+    'gimage',
+    'simage',
     'gcode_start_byte',
     'gcode_end_byte',
     'layer_count',
